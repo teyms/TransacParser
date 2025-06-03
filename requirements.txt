@@ -1,3 +1,7 @@
 pdfplumber
 tabula-py
 pytesseract
+pdf2image
+
+# System dependency required:
+# Requires Poppler for PDF rendering: https://github.com/oschwartz10612/poppler-windows/releases
