@@ -1,0 +1,12 @@
+{
+    "bank_mappings": {
+        "TNG_MY": {
+            "Date": "date",
+            "Status": "status",
+            "Transaction Type": "transaction_type",
+            "Description": "description",
+            "Amount (RM)": "amount",
+            "Wallet Balance": "balance"
+        }
+    }
+}

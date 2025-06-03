@@ -1,0 +1,39 @@
+bank_parser/
+│
+├── data/                         # Raw and processed files
+│   ├── raw/                     # Uploaded bank files (CSV, PDF, XLSX)
+│   └── processed/              # Normalized and tagged outputs (JSON/CSV/XLSX)
+│
+├── configs/                     # Bank-specific header mappings, tag rules
+│   ├── bank_mappings.json      # Column name mappings per bank
+│   └── tag_rules.json          # Keyword/tag matching rules
+│
+├── parsers/                     # File parsers for CSV, PDF, XLSX
+│   ├── __init__.py
+│   ├── csv_parser.py
+│   ├── xlsx_parser.py
+│   └── pdf_parser.py
+│
+├── taggers/                     # Tagging engines
+│   ├── __init__.py
+│   ├── rule_based.py           # Simple keyword-based tagger
+│   ├── llm_based.py            # Optional OpenAI (or local LLM) tagger
+│   └── hybrid.py               # Combine rule-based + LLM fallback
+│
+├── utils/                       # Helpers (date parsing, cleaning, etc.)
+│   ├── __init__.py
+│   └── helpers.py
+│
+├── exporter/                    # Output to Google Sheets, JSON, CSV
+│   ├── __init__.py
+│   ├── csv_exporter.py
+│   ├── json_exporter.py
+│   └── google_sheets.py        # Optional, uses Google Sheets API
+│
+├── notebooks/                   # Jupyter notebooks for prototyping
+│   └── tag_analysis.ipynb
+│
+|── .env 
+├── main.py                      # CLI entry point
+├── requirements.txt             # Project dependencies
+└── README.md                    # Project overview
