@@ -1,12 +1,24 @@
 {
     "bank_mappings": {
-        "TNG_MY": {
-            "Date": "date",
-            "Status": "status",
-            "Transaction Type": "transaction_type",
-            "Description": "description",
-            "Amount (RM)": "amount",
-            "Wallet Balance": "balance"
+        "TNG": {
+            "Name": "Touch 'n Go",
+            "MY": {
+                "DATE": "date",
+                "STATUS": "status",
+                "TRANSACTION_TYPE": "transaction_type",
+                "DESCRIPTION": "description",
+                "AMOUNT_(RM)": "amount",
+                "WALLET_BALANCE": "balance"
+            }
+        },
+        "PBB": {
+            "Name": "Public Bank",
+            "MY": {
+                "TRANSACTION_DATE": "date",
+                "TRANSACTION_DESCRIPTION": "description",
+                "DEBIT_AMOUNT": "debit_amount",
+                "CREDIT_AMOUNT": "credit_amount"
+            }
         }
     }
 }

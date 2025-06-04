@@ -3,7 +3,7 @@ import json
 import os
 import pandas as pd
 
-def apply_header_mapping(df, bank_code, mapping_path='bank_mappings.json'):
+def apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mappings.json'):
     """
     Loads a column mapping from JSON and renames DataFrame columns accordingly.
     """
@@ -19,7 +19,7 @@ def apply_header_mapping(df, bank_code, mapping_path='bank_mappings.json'):
         with open(mapping_path, 'r') as f:
             column_mapping = json.load(f)
 
-        column_mapping = column_mapping.get('bank_mappings', {}).get(bank_code, {})
+        column_mapping = column_mapping.get('bank_mappings', {}).get(bank_code, {}).get(country_code, {})
         print(f"Column mapping loaded: {column_mapping}")
         # Optionally: Keep only columns defined in the mapping
         df = df[[col for col in df.columns if col in column_mapping]]
