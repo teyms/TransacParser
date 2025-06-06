@@ -3,6 +3,7 @@ import pandas as pd
 import pdfplumber
 from dotenv import load_dotenv
 import re
+from datetime import datetime
 
 load_dotenv()  # Load environment variables from .env
 
@@ -21,7 +22,7 @@ def parse_pdf(input_file, bank_code, country_code, password=None):
                 page = pdf.pages[i]
 
                 table = page.extract_table()
-                # print(f"\ntable: {table}")  # Tables
+                print(f"\ntable: {table}")  # Tables
                 if table is None:
                     print(f"No table found on page {i + 1}. Skipping...")
                     continue
@@ -91,7 +92,9 @@ def parse_pdf(input_file, bank_code, country_code, password=None):
 
 
 def cimb_sg_formatter(text):
-    print(f"\ntext:\n{text}")  # Debugging: print the text content
+    # print(f"\ntext:\n{text}")  # Debugging: print the text content
+    # print(f"\ntext:\n{repr(text)}")  # Debugging: print the text content
+
     # Step 1: Locate the header line
     header_match = re.search(r'^.*DATE\s+TRANSACTION DETAILS.*$', text, re.MULTILINE | re.IGNORECASE)
     header_line = header_match.group(0) if header_match else ""
@@ -113,6 +116,40 @@ def cimb_sg_formatter(text):
 
     # Step 4: Combine header + transaction block
     result = header_line + "\n" + transaction_section.strip()
+    print(f"\nresult representation:\n{repr(result)}")  # Debugging: print the text content
+
+
+    split_result = result.split('\n')
+    print(f"\nSplit length:\n{len(split_result)}\n")
+    print(f"\nSplit Result:\n{split_result}\n")
+
+    pattern = r"\d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+    matches = re.findall(pattern, split_result[2])
+    print(f"\nDate:{matches}\n")
+
+
+    # Extract everything before the FIRST amount (e.g., "Service Fee")
+    #    - Use \s+ to ensure the amount is separated by whitespace
+    string_without_date = re.sub(pattern, "", split_result[2])
+    desc_pattern = r"^(.*?)\s+\d{1,3}(?:,\d{3})*\.\d{2}"
+    match = re.search(desc_pattern, string_without_date)
+    text_before_amount = match.group(1).strip()
+    print("text_before_amount:", text_before_amount)  # Output: "Service Fee"
+
+    string_without_desc = re.sub(desc_pattern, "", string_without_date)
+    print("all_amount:", string_without_desc)  # Output: "Service Fee"
+
+
+    return None # for testing only
+
+    for i, line in enumerate(split_result):
+        if line.strip() == "":
+            split_result[i] = "EMPTY_LINE"
+        else:
+            split_result[i] = line.split()
+
+    print(f"\nSplit length x 2 :\n{len(split_result)}\n")
+    print(f"\nSplit Result x 2:\n{split_result}\n")
 
     print(f"\nresult:\n{result}")
     
