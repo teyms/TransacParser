@@ -9,9 +9,9 @@ def apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mapping
     """
     try:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # This gets the root 'transacparser/' dir
-        print(f"Base directory: {base_dir}")
+        # print(f"Base directory: {base_dir}")
         mapping_path = os.path.join(base_dir, 'configs', mapping_path)
-        print(f"Mapping file path: {mapping_path}")
+        # print(f"Mapping file path: {mapping_path}")
 
         if not os.path.exists(mapping_path):
             raise FileNotFoundError(f"Mapping file not found: {mapping_path}")
@@ -20,7 +20,7 @@ def apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mapping
             column_mapping = json.load(f)
 
         column_mapping = column_mapping.get('bank_mappings', {}).get(bank_code, {}).get(country_code, {})
-        print(f"Column mapping loaded: {column_mapping}")
+        # print(f"Column mapping loaded: {column_mapping}")
         # Optionally: Keep only columns defined in the mapping
         df = df[[col for col in df.columns if col in column_mapping]]
     except FileNotFoundError as e:
