@@ -24,8 +24,11 @@ if __name__ == "__main__":
     bank_name = os.getenv("BANK_NAME", "DBS")           # Fallback to "DBS"
     password = os.getenv("PDF_PASSWORD", 'password')  # Optional password for PDF files
     country_code = os.getenv("COUNTRY_CODE", "MY")  # Fallback to "MY"
+    country_code = os.getenv("COUNTRY_CODE", "SG")  # Fallback to "SG"
     bank_code = os.getenv("BANK_CODE", "TNG")  # Fallback to "TNG"
-    bank_code = os.getenv("BANK_CODE", "PBB")  # Fallback to "TNG"
+    bank_code = os.getenv("BANK_CODE", "PBB")  # Fallback to "PBB"
+    bank_code = os.getenv("BANK_CODE", "DBS")  # Fallback to "DBS"
+    bank_code = os.getenv("BANK_CODE", "CIMB")  # Fallback to "DBS"
 
 
     output_type = os.getenv("OUTPUT_TYPE", "json")  # Fallback to "json"
@@ -33,7 +36,7 @@ if __name__ == "__main__":
 
     print(f"PDF loaded successfully: {os.path.exists(input_file)}")
 
-    df = parse_pdf(input_file, password=password)
+    df = parse_pdf(input_file, bank_code, country_code, password=password)
     print(f"\n{df}")
     
     # Apply header mapping
