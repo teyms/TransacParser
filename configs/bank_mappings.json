@@ -19,6 +19,16 @@
                 "DEBIT_AMOUNT": "debit_amount",
                 "CREDIT_AMOUNT": "credit_amount"
             }
+        },
+        "CIMB": {
+            "Name": "CIMB Bank",
+            "SG": {
+                "DATE": "date",
+                "TRANSACTION_DETAILS": "description",
+                "WITHDRAWAL": "withdrawal",
+                "DEPOSIT": "deposit",
+                "BALANCE": "balance"
+            }
         }
     }
 }

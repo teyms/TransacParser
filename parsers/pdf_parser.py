@@ -22,31 +22,26 @@ def parse_pdf(input_file, bank_code, country_code, password=None):
                 page = pdf.pages[i]
 
                 table = page.extract_table()
-                print(f"\ntable: {table}")  # Tables
+                # print(f"\ntable: {table}")  # Tables
                 if table is None:
                     print(f"No table found on page {i + 1}. Skipping...")
                     continue
 
-                # Alternatively try extracting text first
-                text = page.extract_text()
-                # print(text)                
+                match bank_country_code:
+                    case "CIMB_SG":
+                        # Alternatively try extracting text first
+                        text = page.extract_text()
+                        # print(text)                
+                        df_cimb_sg = cimb_sg_formatter(text)  # Format CIMB SG transactions  
 
-                cimb_sg_formatter(text)  # Format CIMB SG transactions      
-
-                # match bank_country_code:
-                #     case "DBS_SG":
-                #         print(f"\ntable: {table}")  # Tables
-                #     case _:
-                #         raise ValueError(f"Unsupported output type: {output_type}")
-
-
-                transactions = table[1:] if table[0] == headers else table # prevent header duplication
-                # print(f"\ntransactions: {transactions}")  # transactions
+                        headers = df_cimb_sg.columns.tolist()  # Get headers from the formatted DataFrame
+                        transactions = df_cimb_sg.values.tolist()  # Get transactions from the formatted DataFrame
+                    case _:
+                        transactions = table[1:] if table[0] == headers else table # prevent header duplication
 
                 array_data += transactions
 
-                # df = pd.DataFrame(array_data, columns=headers)
-                df = pd.DataFrame(array_data)
+            df = pd.DataFrame(array_data)
 
             headers = [header.replace('\n', '_')
                              .replace(' ', '_')
@@ -55,54 +50,19 @@ def parse_pdf(input_file, bank_code, country_code, password=None):
             df.columns = headers
             return df
         return pd.DataFrame()  # Return an empty DataFrame if no pages are found
-    
-# def parse_pdf(input_file, password=None):
-#     with pdfplumber.open(input_file, password=password) as pdf:
-#         if len(pdf.pages) > 0:
-#             # print(f"Number of pages: {len(pdf.pages)}")
-#             headers = pdf.pages[0].extract_table()[0] if pdf.pages[0].extract_table() else []
-#             print(f"Headers: {headers}")  # Headers
-
-#             array_data = []
-#             for i in range(len(pdf.pages)):
-#                 print(f"Page {i + 1}:") 
-#                 page = pdf.pages[i]
-
-#                 table = page.extract_table()
-#                 # print(f"\ntable: {table}")  # Tables
-
-#                 if table is None:
-#                     print(f"No table found on page {i + 1}. Skipping...")
-#                     continue
-#                 transactions = table[1:] if table[0] == headers else table # prevent header duplication
-#                 # print(f"\ntransactions: {transactions}")  # transactions
-
-#                 array_data += transactions
-
-#                 # df = pd.DataFrame(array_data, columns=headers)
-#                 df = pd.DataFrame(array_data)
-
-#             headers = [header.replace('\n', '_')
-#                              .replace(' ', '_')
-#                              .upper()  # Clean and format headers
-#                              .strip() for header in headers]  # Clean header
-#             df.columns = headers
-#             return df
-#         return pd.DataFrame()  # Return an empty DataFrame if no pages are found
-
 
 def cimb_sg_formatter(text):
-    # print(f"\ntext:\n{text}")  # Debugging: print the text content
-    # print(f"\ntext:\n{repr(text)}")  # Debugging: print the text content
-
     # Step 1: Locate the header line
     header_match = re.search(r'^.*DATE\s+TRANSACTION DETAILS.*$', text, re.MULTILINE | re.IGNORECASE)
     header_line = header_match.group(0) if header_match else ""
+    header_parts = header_line.split()
+    final_header = [header_parts[0], ' '.join(header_parts[1:3]), *header_parts[3:]]
+    # print(f"\ncolumns_line:\n{final_header}")  # Debugging: print the header line
 
     # Step 2: Extract everything starting from the first line with a date
     start_match = re.search(r'^\d{2} [A-Za-z]{3} .+', text, flags=re.MULTILINE)
 
-    # Step 3: Cut the text starting from that point
+    # Step 3: Extract only the transaction section
     transaction_section = ""
     if start_match:
         start_pos = start_match.start()
@@ -115,41 +75,65 @@ def cimb_sg_formatter(text):
             transaction_section = transaction_section[:stop_match.start()]
 
     # Step 4: Combine header + transaction block
-    result = header_line + "\n" + transaction_section.strip()
-    print(f"\nresult representation:\n{repr(result)}")  # Debugging: print the text content
+    transaction_records = header_line + "\n" + transaction_section.strip()
+    # print(f"\ntransaction_records representation:\n{repr(transaction_records)}")  # Debugging: print the text content
 
+    transaction_records = transaction_records.split('\n')[1:] # Skip the header line
+    # print(f"\transaction_records length:\n{len(transaction_records)}\n")
+    # print(f"\transaction_records Result:\n{transaction_records}\n")
 
-    split_result = result.split('\n')
-    print(f"\nSplit length:\n{len(split_result)}\n")
-    print(f"\nSplit Result:\n{split_result}\n")
-
-    pattern = r"\d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
-    matches = re.findall(pattern, split_result[2])
-    print(f"\nDate:{matches}\n")
-
-
-    # Extract everything before the FIRST amount (e.g., "Service Fee")
-    #    - Use \s+ to ensure the amount is separated by whitespace
-    string_without_date = re.sub(pattern, "", split_result[2])
+    date_pattern = r"\d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
     desc_pattern = r"^(.*?)\s+\d{1,3}(?:,\d{3})*\.\d{2}"
-    match = re.search(desc_pattern, string_without_date)
-    text_before_amount = match.group(1).strip()
-    print("text_before_amount:", text_before_amount)  # Output: "Service Fee"
+    amount_pattern = r"\d{1,3}(?:,\d{3})*\.\d{2}"
+    df = pd.DataFrame(columns=final_header)
 
-    string_without_desc = re.sub(desc_pattern, "", string_without_date)
-    print("all_amount:", string_without_desc)  # Output: "Service Fee"
+    prev_amount = 0 #Use to calculate the difference in amounts
+    prev_date = None # Use to keep track of the last date for records without a date
 
+    for i, line in enumerate(transaction_records):
+        if line.strip() == "": # Skip empty lines
+            continue
 
-    return None # for testing only
+        str_date = re.findall(date_pattern, line)
+        if len(str_date) > 0:
+            # new record with date
+            str_without_date = re.sub(date_pattern, "", line)
 
-    for i, line in enumerate(split_result):
-        if line.strip() == "":
-            split_result[i] = "EMPTY_LINE"
+            # Extract everything before the FIRST amount (e.g., "Service Fee")
+            #    - Use \s+ to ensure the amount is separated by whitespace            
+            desc_match = re.search(desc_pattern, str_without_date)
+            str_desc = desc_match.group(1).strip()
+
+            str_amounts = str_without_date.replace(desc_match.group(1).strip(), "").replace(",", "")
+            str_amount_lists = str_amounts.split()
+            num_amount_lists = [float(num.replace(',', '')) for num in str_amount_lists]           
+            amount = num_amount_lists[-1] - prev_amount
         else:
-            split_result[i] = line.split()
+            str_amount_lists = re.findall(amount_pattern, line)
+            if len(str_amount_lists) > 0:
+                # if no date but got amount, then it is a new record 
+                str_date = [prev_date]
+                desc_match = re.search(desc_pattern, line)
+                str_desc = desc_match.group(1).strip()                
+                num_amount_lists = [float(num.replace(',', '')) for num in str_amount_lists]        
+                amount = num_amount_lists[-1] - prev_amount           
+            else:
+                # if no date and no amount, then it is the desc for the previous record
+                str_desc = line.strip()
+                df.at[df.index[-1], 'TRANSACTION DETAILS'] += f' {str_desc}' # Append to the previous record's description
+                continue #skip to next iteration, since its the leftover desc for the previous record
 
-    print(f"\nSplit length x 2 :\n{len(split_result)}\n")
-    print(f"\nSplit Result x 2:\n{split_result}\n")
+        new_row = {
+            'DATE': [str_date[0]],
+            'TRANSACTION DETAILS': [str_desc],
+            'WITHDRAWAL': [amount if len(num_amount_lists) > 0 and amount < 0 else 0],
+            'DEPOSIT': [amount if len(num_amount_lists) > 0 and amount > 0 else 0],
+            'BALANCE': [num_amount_lists[-1]]
+        }        
 
-    print(f"\nresult:\n{result}")
-    
+        df = pd.concat([df, pd.DataFrame(new_row)], ignore_index=True)
+        if len(num_amount_lists) > 0:
+            prev_amount = num_amount_lists[-1]           
+        prev_date = str_date[0]          
+    # print(df)
+    return df  # for testing only
