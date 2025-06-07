@@ -1,7 +1,7 @@
 {
     "bank_mappings": {
         "TNG": {
-            "Name": "Touch 'n Go",
+            "name": "Touch 'n Go",
             "MY": {
                 "DATE": "date",
                 "STATUS": "status",
@@ -12,7 +12,7 @@
             }
         },
         "PBB": {
-            "Name": "Public Bank",
+            "name": "Public Bank",
             "MY": {
                 "TRANSACTION_DATE": "date",
                 "TRANSACTION_DESCRIPTION": "description",
@@ -21,7 +21,7 @@
             }
         },
         "CIMB": {
-            "Name": "CIMB Bank",
+            "name": "CIMB Bank",
             "SG": {
                 "DATE": "date",
                 "TRANSACTION_DETAILS": "description",

@@ -1,0 +1,11 @@
+{
+    "read_extension_priority": ["csv", "xlsx", "pdf"],
+    "output": {
+        "_comments_file_format": "format to choose for output files, options: json, csv, xlsx",
+        "file_format": "json"
+    },
+    "read_date_format": {
+        "_comments": "specify the YYYYDD to read instead of Default(Previous Month)",
+        "format": null
+    }
+}
