@@ -8,8 +8,7 @@ from datetime import datetime
 load_dotenv()  # Load environment variables from .env
 
 
-def parse_pdf(input_file, bank_code, country_code, password=None):
-    bank_country_code = f"{bank_code}_{country_code}".upper()
+def parse_pdf(input_file, bank_country_code, password=None):
     with pdfplumber.open(input_file, password=password) as pdf:
         if len(pdf.pages) > 0:
             print(f"Number of pages: {len(pdf.pages)}")
@@ -31,9 +30,11 @@ def parse_pdf(input_file, bank_code, country_code, password=None):
                     case "CIMB_SG":
                         # Alternatively try extracting text first
                         text = page.extract_text()
-                        # print(text)                
+                        print(text)                
                         df_cimb_sg = cimb_sg_formatter(text)  # Format CIMB SG transactions  
-
+                        if df_cimb_sg.empty:
+                            print(f"No transactions found on page {i + 1}. Skipping...")
+                            continue
                         headers = df_cimb_sg.columns.tolist()  # Get headers from the formatted DataFrame
                         transactions = df_cimb_sg.values.tolist()  # Get transactions from the formatted DataFrame
                     case _:
@@ -53,8 +54,12 @@ def parse_pdf(input_file, bank_code, country_code, password=None):
 
 def cimb_sg_formatter(text):
     # Step 1: Locate the header line
-    header_match = re.search(r'^.*DATE\s+TRANSACTION DETAILS.*$', text, re.MULTILINE | re.IGNORECASE)
-    header_line = header_match.group(0) if header_match else ""
+    header_match = re.search(r'^.*DATE.*TRANSACTION DETAILS.*$', text, re.MULTILINE | re.IGNORECASE)    
+    # header_line = header_match.group(0) if header_match else ""
+    header_line = header_match.group(0) if header_match else None  # Return an empty DataFrame if no header found
+    if not header_line:
+        print("No header line found in the text.")
+        return pd.DataFrame()
     header_parts = header_line.split()
     final_header = [header_parts[0], ' '.join(header_parts[1:3]), *header_parts[3:]]
     # print(f"\ncolumns_line:\n{final_header}")  # Debugging: print the header line
@@ -136,4 +141,4 @@ def cimb_sg_formatter(text):
             prev_amount = num_amount_lists[-1]           
         prev_date = str_date[0]          
     # print(df)
-    return df  # for testing only
+    return df
