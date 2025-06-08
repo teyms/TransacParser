@@ -34,3 +34,32 @@ def load_config(name):
     with open(config_path, 'r') as f:
         json_content = json.load(f)
     return json_content
+
+
+def format_transaction_date(df, bank_country_code, yyyymm):
+    """
+    Format transaction dates based on bank country code
+    
+    Args:
+        df (pd.DataFrame): DataFrame containing transaction data
+        bank_country_code (str): Bank and country code (e.g. 'CIMB_SG')
+        yyyymm (str): Year and month in YYYYMM format
+        
+    Returns:
+        pd.DataFrame: DataFrame with formatted dates
+    """
+    if bank_country_code == "CIMB_SG":
+        year = yyyymm[:4]
+        df['date'] = df['date'] + f' {year}'
+        
+        # Convert to datetime[ns]
+        df['date'] = pd.to_datetime(df['date'], format='%d %b %Y')
+        # print(df['date'].dtypes)  # Check the dtype
+        
+        # Format to 'dd-mm-yyyy'
+        df['date'] = df['date'].dt.strftime('%d-%m-%Y')
+    else:
+        # print(f"\n{df.columns}")
+        df['date'] = pd.to_datetime(df['date'], dayfirst=True, errors='coerce').dt.strftime('%d-%m-%Y')
+    
+    return df

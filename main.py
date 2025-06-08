@@ -1,10 +1,11 @@
 import os
 import json
-from utils.helpers import apply_header_mapping, load_config
+from utils.helpers import apply_header_mapping, load_config, format_transaction_date
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from parsers import parse_pdf
 from exporter import json_exporter
+import pandas as pd
 
 load_dotenv()  # Load environment variables from .env
 GLOBAL_CONFIG = load_config('config.json')
@@ -38,9 +39,8 @@ if __name__ == "__main__":
     source_paths = folder_path.get('folder_paths', {}).get("source", {})
 
     prev_month_date = (datetime.now().replace(day=1) - timedelta(days=1)).strftime("%Y%m")
-    yyyydd = prev_month_date if GLOBAL_CONFIG["read_date_format"]["format"] is None else GLOBAL_CONFIG["read_date_format"]["format"]
+    yyyymm = prev_month_date if GLOBAL_CONFIG["read_date_format"]["format"] is None else GLOBAL_CONFIG["read_date_format"]["format"]
 
-    print(f"Prev date: {yyyydd}")
     # raise KeyError # for testing purposes
     for key, value in source_paths.items():
         bank_country_code = f"{key.upper()}"
@@ -48,14 +48,13 @@ if __name__ == "__main__":
         # set the `filename` extension based on the priority, and if file available then use it and skip for the rest extensions, otherwise continue to the next extension
         # the extension should follow the array get from `read_extension_priority` in the config.json
         for ext in extension_priority:
-            filename = f"{bank_country_code}_{yyyydd}.{ext}"
+            filename = f"{bank_country_code}_{yyyymm}.{ext}"
             # check if the file exists with the current extension
             input_file = os.path.join(value, filename)
             print(f"Checking file: {input_file}")
             if os.path.exists(input_file):
                 print(f"Using file: {input_file}")
                 break
-        output_type = GLOBAL_CONFIG["output"]["file_format"]
         # df = parse_pdf(input_file, bank_code, country_code, password=password)
         df = parse_pdf(input_file, bank_country_code, password=password)
         print(f"\n{df}")
@@ -65,5 +64,10 @@ if __name__ == "__main__":
         # Apply header mapping
         df = apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mappings.json')
 
+        # Replace the match statement in main with:
+        df = format_transaction_date(df, bank_country_code, yyyymm)
+        # print(f"\n{df}") 
+
+        output_type = GLOBAL_CONFIG["output"]["file_format"]
         output_filename = f"{bank_code}_{country_code}_output_"  # Default filename
         output_manager(df, output_type=output_type, filename=output_filename)            
