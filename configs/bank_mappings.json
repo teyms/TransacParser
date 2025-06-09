@@ -28,6 +28,13 @@
                 "WITHDRAWAL": "withdrawal",
                 "DEPOSIT": "deposit",
                 "BALANCE": "balance"
+            },
+            "MY": {
+                "DATE": "date",
+                "TRANSACTION_DETAILS": "description",
+                "MONEY_IN": "money_in",
+                "MONEY_OUT": "money_out",
+                "BALANCE": "balance"
             }
         }
     }

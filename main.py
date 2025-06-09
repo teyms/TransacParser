@@ -3,12 +3,14 @@ import json
 from utils.helpers import apply_header_mapping, load_config, format_transaction_date
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from parsers import parse_pdf
+from parsers import parse_pdf, parse_excel
 from exporter import json_exporter
 import pandas as pd
 
+DEFAULT_FILE_TYPE = 'csv'  # Default file type
 load_dotenv()  # Load environment variables from .env
 GLOBAL_CONFIG = load_config('config.json')
+
 def output_manager(df, output_type="json", filename=None):
     """
     Manages the output format of the DataFrame.
@@ -34,7 +36,7 @@ if __name__ == "__main__":
 #     # output_filename = os.getenv("OUTPUT_FILENAME", None)  # Fallback to "json"
 
 # ###########################################################################
-
+    file_type = DEFAULT_FILE_TYPE  # Default file type
     folder_path = load_config('folder_paths.json')    
     source_paths = folder_path.get('folder_paths', {}).get("source", {})
 
@@ -51,18 +53,26 @@ if __name__ == "__main__":
             filename = f"{bank_country_code}_{yyyymm}.{ext}"
             # check if the file exists with the current extension
             input_file = os.path.join(value, filename)
-            print(f"Checking file: {input_file}")
+            print(f"\nChecking file: {input_file}")
             if os.path.exists(input_file):
+                file_type = ext  # Update file type based on the found file
                 print(f"Using file: {input_file}")
                 break
-        # df = parse_pdf(input_file, bank_code, country_code, password=password)
-        df = parse_pdf(input_file, bank_country_code, password=password)
-        print(f"\n{df}")
+        
+        match file_type:
+            case "pdf":
+                # df = parse_pdf(input_file, bank_code, country_code, password=password)
+                df = parse_pdf(input_file, bank_country_code, password=password)
+            case "csv":
+                df = parse_excel(input_file, bank_country_code, password=password)
+        # print(f"\n{df}")    
+
         
         bank_code = bank_country_code.split('_')[0]  # Extract bank code from the key
         country_code = bank_country_code.split('_')[1]  # Extract country code from the key
         # Apply header mapping
         df = apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mappings.json')
+        # print(f"\n df after apply_header_mapping: {df}")
 
         # Replace the match statement in main with:
         df = format_transaction_date(df, bank_country_code, yyyymm)
