@@ -8,11 +8,12 @@ def apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mapping
     """
     try:
         mapping_json = load_config(mapping_path)
-
+        # print(f"df before applying header mapping: {df.columns}")  # Debugging line to check DataFrame before mapping
         column_mapping = mapping_json.get('bank_mappings', {}).get(bank_code, {}).get(country_code, {})
         # print(f"Column mapping loaded: {column_mapping}")
         # Optionally: Keep only columns defined in the mapping
         df = df[[col for col in df.columns if col in column_mapping]]
+        # print(f"DataFrame after filtering columns: {df.head()}")  # Debugging line to check DataFrame after filtering   
     except FileNotFoundError as e:
         print(f"Error: {e}")
         return pd.DataFrame()

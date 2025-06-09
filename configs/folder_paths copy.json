@@ -1,10 +1,11 @@
 {
     "folder_paths":{
         "source":{
-            "pbb_my":"D:/bankWallet_records/pbe_original_records/",
-            "cimb_sg":"D:/bankWallet_records/cimb_sg_original_records/",
-            "tng_my":"D:/bankWallet_records/tng_original_records/"
+            "pbb_my":"D:/bankWallet/pbe_my/",
+            "cimb_sg":"D:/bankWallet/cimb_sg/",
+            "cimb_my":"D:/bankWallet/cimb_my/",
+            "tng_my":"D:/bankWallet/tng_my/"
         },
-        "destination": "D:/bankWallet_records/processed_records/"
+        "destination": "/D:/github_repo/TransacParser/data/raw"
     }
 }

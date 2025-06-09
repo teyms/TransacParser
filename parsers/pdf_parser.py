@@ -11,13 +11,13 @@ load_dotenv()  # Load environment variables from .env
 def parse_pdf(input_file, bank_country_code, password=None):
     with pdfplumber.open(input_file, password=password) as pdf:
         if len(pdf.pages) > 0:
-            print(f"Number of pages: {len(pdf.pages)}")
+            # print(f"Number of pages: {len(pdf.pages)}")
             headers = pdf.pages[0].extract_table()[0] if pdf.pages[0].extract_table() else []
-            print(f"Headers: {headers}")  # Headers
+            # print(f"Headers: {headers}")  # Headers
 
             array_data = []
             for i in range(len(pdf.pages)):
-                print(f"Page {i + 1}:") 
+                # print(f"Page {i + 1}:") 
                 page = pdf.pages[i]
 
                 table = page.extract_table()
@@ -30,7 +30,7 @@ def parse_pdf(input_file, bank_country_code, password=None):
                     case "CIMB_SG":
                         # Alternatively try extracting text first
                         text = page.extract_text()
-                        print(text)                
+                        # print(text)                
                         df_cimb_sg = cimb_sg_formatter(text)  # Format CIMB SG transactions  
                         if df_cimb_sg.empty:
                             print(f"No transactions found on page {i + 1}. Skipping...")

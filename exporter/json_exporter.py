@@ -13,5 +13,5 @@ def json_exporter(df, filename=default_filename):
     # Save to a JSON file
     with open(f'./data/processed/{filename}', 'w') as f:
         json.dump(json.loads(json_str), f, indent=4)  # indent for pretty formatting
-    print(f"\nData saved to ./data/processed/{filename}")
+    print(f"Data saved to ./data/processed/{filename}")
     return filename  # Return the filename for further use if needed
