@@ -36,6 +36,20 @@
                 "MONEY_OUT": "money_out",
                 "BALANCE": "balance"
             }
+        },
+        "DBS": {
+            "name": "DBS Bank",
+            "SG": {
+                "TRANSACTION_DATE": "date",
+                "VALUE_DATE": "value_date",
+                "STATEMENT_CODE": "statement_code",
+                "REFERENCE": "reference",                
+                "DEBIT_AMOUNT": "debit_amount",
+                "CREDIT_AMOUNT": "credit_amount",
+                "CLIENT_REFERENCE": "client_reference",                
+                "ADDITIONAL_REFERENCE": "additional_reference",
+                "MISC_REFERENCE": "misc_reference"
+            }
         }
     }
 }
