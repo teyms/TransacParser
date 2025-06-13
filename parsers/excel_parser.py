@@ -16,7 +16,7 @@ def parse_excel(input_file, bank_country_code, password=None):
             # print(f"DBS_SG headers: {headers}")
             df = pd.read_csv(
                     input_file,
-                    skiprows=19,
+                    skiprows=20,
                     names=headers,
                     header=None,
                     engine="python",
