@@ -1,6 +1,6 @@
 import os
 import json
-from utils.helpers import apply_header_mapping, load_config, format_transaction_date
+from utils.helpers import apply_header_mapping, load_config, format_transaction_date, standardize_output_records
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from parsers import parse_pdf, parse_excel
@@ -76,6 +76,8 @@ if __name__ == "__main__":
 
         # Replace the match statement in main with:
         df = format_transaction_date(df, bank_country_code, yyyymm)
+        # print(f"\n{df}") 
+        df = standardize_output_records(df, bank_country_code)
         # print(f"\n{df}") 
 
         output_type = GLOBAL_CONFIG["output"]["file_format"]

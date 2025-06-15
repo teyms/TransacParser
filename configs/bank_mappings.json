@@ -4,11 +4,11 @@
             "name": "Touch 'n Go",
             "MY": {
                 "DATE": "date",
-                "STATUS": "status",
-                "TRANSACTION_TYPE": "transaction_type",
                 "DESCRIPTION": "description",
                 "AMOUNT_(RM)": "amount",
-                "WALLET_BALANCE": "balance"
+                "WALLET_BALANCE": "balance",
+                "STATUS": "status",
+                "TRANSACTION_TYPE": "transaction_type"
             }
         },
         "PBB": {
@@ -16,8 +16,8 @@
             "MY": {
                 "TRANSACTION_DATE": "date",
                 "TRANSACTION_DESCRIPTION": "description",
-                "DEBIT_AMOUNT": "debit_amount",
-                "CREDIT_AMOUNT": "credit_amount"
+                "DEBIT_AMOUNT": "amount+",
+                "CREDIT_AMOUNT": "amount-"
             }
         },
         "CIMB": {
