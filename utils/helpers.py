@@ -116,69 +116,103 @@ def standardize_output_records(df, bank_country_code):
     
     # Ensure all standard columns are present
     for col in standard_columns:
-        
+        match bank_country_code.strip():
+            case "TNG_MY":                    
+                if col not in df.columns: # create missing columns
+                    if col == 'currency': df[col] = currency_mapping[bank_country_code_split[-1]]
+                    elif col == 'bank_type': df[col] = bank_country_code_split[0]
+                    else: df[col] = pd.NA
+                else: # reformat existing columns
+                    if col == 'amount': 
+                        df['amount'] = (
+                            df['amount']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .str.replace('RM', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )  
+                        # Mark specific transaction types as negative or positive based on transaction type
+                        debit_trans_type = ['DUITNOW_RECEI']
+                        df['amount'] = df.apply(
+                            lambda row: +row['amount'] if any(keyword in row['transaction_type'] for keyword in debit_trans_type) 
+                                        else -row['amount'],
+                            axis=1
+                        )                        
+                        df[col] = df['amount']  # Use 'amount' column directly       
+                    elif col == 'balance':
+                        df['balance'] = (
+                            df['balance']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .str.replace('RM', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )  
+                        df[col] = df['balance']  # Use 'balance' column directly                                   
+                        # print(f"df['balance'] after conversion:\n{df['balance']}")  # Debugging line to check 'amount' column
 
-            match bank_country_code.strip():
-                case "TNG_MY":                    
-                    if col not in df.columns: # create missing columns
-                        if col == 'currency': df[col] = currency_mapping[bank_country_code_split[-1]]
-                        elif col == 'bank_type': df[col] = bank_country_code_split[0]
-                        else: df[col] = pd.NA
-                    else: # reformat existing columns
-                        if col == 'amount': 
-                            df['amount'] = (
-                                df['amount']
-                                .astype(str)
-                                .str.replace(',', '', regex=False)
-                                .str.replace('RM', '', regex=False)
-                                .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
-                            )  
-                            # Mark specific transaction types as negative or positive based on transaction type
-                            debit_trans_type = ['DUITNOW_RECEI']
-                            df['amount'] = df.apply(
-                                lambda row: +row['amount'] if any(keyword in row['transaction_type'] for keyword in debit_trans_type) 
-                                            else -row['amount'],
-                                axis=1
-                            )                        
-                            df[col] = df['amount']  # Use 'amount' column directly       
-                        elif col == 'balance':
-                            df['balance'] = (
-                                df['balance']
-                                .astype(str)
-                                .str.replace(',', '', regex=False)
-                                .str.replace('RM', '', regex=False)
-                                .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
-                            )  
-                            df[col] = df['balance']  # Use 'balance' column directly                                   
-                            # print(f"df['balance'] after conversion:\n{df['balance']}")  # Debugging line to check 'amount' column
+            case "PBB_MY":
+                if col not in df.columns:
+                    if col == 'currency': df[col] = currency_mapping[bank_country_code_split[-1]]
+                    elif col == 'bank_type': df[col] = bank_country_code_split[0]
+                    elif col == 'amount': 
+                        # Ensure both 'amount+' and 'amount-' columns are converted to numeric
+                        df['amount+'] = (
+                            df['amount+']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )
 
+                        df['amount-'] = (
+                            df['amount-']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )
 
+                        # Combine 'amount+' and 'amount-' into 'amount'
+                        df[col] = df['amount+'].fillna(0) - df['amount-'].fillna(0)  # 'amount+' minus 'amount-' (negate the 'amount-')          
+                    else:
+                        df[col] = pd.NA
 
-                case "PBB_MY":
-                    if col not in df.columns:
-                        if col == 'currency': df[col] = currency_mapping[bank_country_code_split[-1]]
-                        elif col == 'bank_type': df[col] = bank_country_code_split[0]
-                        elif col == 'amount': 
-                            # Ensure both 'amount+' and 'amount-' columns are converted to numeric
-                            df['amount+'] = (
-                                df['amount+']
-                                .astype(str)
-                                .str.replace(',', '', regex=False)
-                                .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
-                            )
+            case "CIMB_MY":
+                if col not in df.columns:
+                    if col == 'currency': df[col] = currency_mapping[bank_country_code_split[-1]]
+                    elif col == 'bank_type': df[col] = bank_country_code_split[0]
+                    elif col == 'amount': 
+                        # Ensure both 'amount+' and 'amount-' columns are converted to numeric
+                        df['amount+'] = (
+                            df['amount+']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .str.replace('MYR', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )
 
-                            df['amount-'] = (
-                                df['amount-']
-                                .astype(str)
-                                .str.replace(',', '', regex=False)
-                                .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
-                            )
+                        df['amount-'] = (
+                            df['amount-']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .str.replace('MYR', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )
 
-                            # Combine 'amount+' and 'amount-' into 'amount'
-                            df[col] = df['amount+'].fillna(0) - df['amount-'].fillna(0)  # 'amount+' minus 'amount-' (negate the 'amount-')          
-                        else:
-                            df[col] = pd.NA
-                case _:    
+                        # Combine 'amount+' and 'amount-' into 'amount'
+                        df[col] = df['amount+'].fillna(0) - df['amount-'].fillna(0)  # 'amount+' minus 'amount-' (negate the 'amount-')  
+                    else: df[col] = pd.NA
+                else:# reformat existing columns
+                    if col == 'balance':
+                        df['balance'] = (
+                            df['balance']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .str.replace('MYR', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )  
+                        df[col] = df['balance']  # Use 'balance' column directly                                
+
+            case _:  
+                if col not in df.columns:  
                     df[col] = pd.NA  # Add missing columns with NA values
     
     # Reorder the DataFrame to match the standard columns

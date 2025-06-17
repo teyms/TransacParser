@@ -32,8 +32,8 @@
             "MY": {
                 "DATE": "date",
                 "TRANSACTION_DETAILS": "description",
-                "MONEY_IN": "money_in",
-                "MONEY_OUT": "money_out",
+                "MONEY_IN": "amount+",
+                "MONEY_OUT": "amount-",
                 "BALANCE": "balance"
             }
         },
