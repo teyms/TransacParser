@@ -25,8 +25,8 @@
             "SG": {
                 "DATE": "date",
                 "TRANSACTION_DETAILS": "description",
-                "WITHDRAWAL": "withdrawal",
-                "DEPOSIT": "deposit",
+                "WITHDRAWAL": "amount-",
+                "DEPOSIT": "amount+",
                 "BALANCE": "balance"
             },
             "MY": {

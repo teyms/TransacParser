@@ -58,7 +58,7 @@ def format_transaction_date(df, bank_country_code, yyyymm):
         # print(df['date'].dtypes)  # Check the dtype
         
         # Format to 'dd-mm-yyyy'
-        df['date'] = df['date'].dt.strftime('%d-%m-%Y')
+        # df['date'] = df['date'].dt.strftime('%d-%m-%Y')
     else:
         # Try common date formats for other banks
         date_formats = [
@@ -175,7 +175,7 @@ def standardize_output_records(df, bank_country_code):
                     else:
                         df[col] = pd.NA
 
-            case "CIMB_MY":
+            case "CIMB_MY"| "CIMB_SG":
                 if col not in df.columns:
                     if col == 'currency': df[col] = currency_mapping[bank_country_code_split[-1]]
                     elif col == 'bank_type': df[col] = bank_country_code_split[0]
