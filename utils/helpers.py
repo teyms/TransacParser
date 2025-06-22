@@ -211,6 +211,33 @@ def standardize_output_records(df, bank_country_code):
                         )  
                         df[col] = df['balance']  # Use 'balance' column directly                                
 
+            case "DBS_SG":
+                if col not in df.columns:
+                    if col == 'currency': df[col] = currency_mapping[bank_country_code_split[-1]]
+                    elif col == 'bank_type': df[col] = bank_country_code_split[0]
+                    elif col == 'description':
+                        df[col] = df[['reference','client_reference','additional_reference','misc_reference',]].astype(str).agg('|'.join, axis=1)
+                    elif col == 'amount': 
+                        # Ensure both 'amount+' and 'amount-' columns are converted to numeric
+                        df['amount+'] = (
+                            df['amount+']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .str.replace('MYR', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )
+
+                        df['amount-'] = (
+                            df['amount-']
+                            .astype(str)
+                            .str.replace(',', '', regex=False)
+                            .str.replace('MYR', '', regex=False)
+                            .apply(pd.to_numeric, errors='coerce')  # Convert to numeric, invalid values will be NaN
+                        )
+
+                        # Combine 'amount+' and 'amount-' into 'amount'
+                        df[col] = df['amount+'].fillna(0) - df['amount-'].fillna(0)  # 'amount+' minus 'amount-' (negate the 'amount-')  
+                    else: df[col] = pd.NA
             case _:  
                 if col not in df.columns:  
                     df[col] = pd.NA  # Add missing columns with NA values
