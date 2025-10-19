@@ -44,11 +44,12 @@ def parse_pdf(input_file, bank_country_code, password=None):
 
             df = pd.DataFrame(array_data)
 
-            headers = [header.replace('\n', '_')
-                             .replace(' ', '_')
-                             .upper()  # Clean and format headers
-                             .strip() for header in headers]  # Clean header
+            headers = [header.strip()
+                            .replace('\n', '_')
+                            .replace(' ', '_')
+                            .upper() for header in headers]  # Clean header
             df.columns = headers
+            # print(df)
             return df
         return pd.DataFrame()  # Return an empty DataFrame if no pages are found
 

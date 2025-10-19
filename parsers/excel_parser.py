@@ -12,11 +12,12 @@ def parse_excel(input_file, bank_country_code, password=None):
     # df = pd.read_excel(input_file, engine='openpyxl')
     match bank_country_code:
         case "DBS_SG":
-            headers = pd.read_csv(input_file, skiprows=19, engine='python', nrows=1).columns.tolist() # Get headers from the first row
+            # headers = pd.read_csv(input_file, skiprows=19, engine='python', nrows=1).columns.tolist() # Get headers from the first row
+            headers = pd.read_csv(input_file, skiprows=7, engine='python', nrows=1).columns.tolist() # Get headers from the first row
             # print(f"DBS_SG headers: {headers}")
             df = pd.read_csv(
                     input_file,
-                    skiprows=20,
+                    skiprows=8,
                     names=headers,
                     header=None,
                     engine="python",
@@ -27,10 +28,15 @@ def parse_excel(input_file, bank_country_code, password=None):
             df = pd.read_csv(input_file)
 
     headers = df.columns.tolist()  # Get headers from the DataFrame
-    headers = [header.replace('\n', '_')
+    # headers = [header.replace('\n', '_')
+    #                 .replace(' ', '_')
+    #                 .upper()  # Clean and format headers
+    #                 .strip() for header in headers]  # Clean header
+    headers = [header.strip() 
+                    .replace('\n', '_')
                     .replace(' ', '_')
-                    .upper()  # Clean and format headers
-                    .strip() for header in headers]  # Clean header
+                    .upper()  for header in headers]  # Clean header
+                    
     df.columns = headers
     # print(f"DataFrame loaded with headers: {df.head()}")
     # print(f"DataFrame loaded with Date: {df['Date']}")

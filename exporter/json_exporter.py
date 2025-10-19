@@ -15,3 +15,13 @@ def json_exporter(df, filename=default_filename):
         json.dump(json.loads(json_str), f, indent=4)  # indent for pretty formatting
     print(f"Data saved to ./data/processed/{filename}")
     return filename  # Return the filename for further use if needed
+
+def csv_exporter(df, filename=default_filename):
+    date = datetime.now().strftime("%Y%m")
+    filename = f'ALL_OUTPUT_{date}_{timestamp}.csv'  # Ensure the filename ends with .json
+
+    # Save to CSV
+    df.to_csv(f"./data/processed/{filename}", index=False)  # index=False avoids saving row numbers
+
+    print(f"Data saved to ./data/processed/{filename}")
+    return filename  # Return the filename for further use if needed

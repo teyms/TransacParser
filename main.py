@@ -4,7 +4,7 @@ from utils.helpers import apply_header_mapping, load_config, format_transaction_
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from parsers import parse_pdf, parse_excel
-from exporter import json_exporter
+from exporter import json_exporter, csv_exporter
 import pandas as pd
 
 DEFAULT_FILE_TYPE = 'csv'  # Default file type
@@ -42,7 +42,8 @@ if __name__ == "__main__":
 
     prev_month_date = (datetime.now().replace(day=1) - timedelta(days=1)).strftime("%Y%m")
     yyyymm = prev_month_date if GLOBAL_CONFIG["read_date_format"]["format"] is None else GLOBAL_CONFIG["read_date_format"]["format"]
-
+    all_dfs = []
+    standardize_headers = None
     # raise KeyError # for testing purposes
     for key, value in source_paths.items():
         bank_country_code = f"{key.upper()}"
@@ -66,6 +67,8 @@ if __name__ == "__main__":
             case "csv":
                 df = parse_excel(input_file, bank_country_code, password=password)
         # print(f"\n{df}")    
+        # print(f"\n{df.columns}")    
+        # print(f"===============================")    
 
         
         bank_code = bank_country_code.split('_')[0]  # Extract bank code from the key
@@ -73,13 +76,28 @@ if __name__ == "__main__":
         # Apply header mapping
         df = apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mappings.json')
         # print(f"\n df after apply_header_mapping: {df}")
-
+        # print(f"\n{df}") 
         # Replace the match statement in main with:
         df = format_transaction_date(df, bank_country_code, yyyymm)
         # print(f"\n{df}") 
         df = standardize_output_records(df, bank_country_code)
         # print(f"\n{df}") 
+        standardize_headers = df.columns
+
+
+        #################################################################################
+        #####          SHOULD HAVE MOVE TO A FUNCTION
+        #################################################################################
+        all_dfs.append(df)
+
+
+        #################################################################################
 
         output_type = GLOBAL_CONFIG["output"]["file_format"]
         output_filename = f"{bank_code}_{country_code}_output_"  # Default filename
-        output_manager(df, output_type=output_type, filename=output_filename)            
+        output_manager(df, output_type=output_type, filename=output_filename)  
+    merged_df = pd.concat(all_dfs, ignore_index=True)
+    merged_df.columns = standardize_headers    
+    # Save to CSV
+    csv_exporter(merged_df)
+    # print(merged_df)      

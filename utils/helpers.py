@@ -101,7 +101,7 @@ def standardize_output_records(df, bank_country_code):
     """
     # Define the standard columns
     standard_columns = [
-        'date', 'description', 'amount', 'currency', 'balance', 'bank_type', 'status'
+        'date', 'description', 'bank_type', 'status', 'currency', 'amount', 'balance'
     ]
 
     currency_mapping = {
