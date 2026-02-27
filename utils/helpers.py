@@ -101,19 +101,17 @@ def standardize_output_records(df, bank_country_code):
     """
     # Define the standard columns
     standard_columns = [
-        'date', 'description', 'bank_type', 'status', 'currency', 'amount', 'balance'
+        'date', 'description', 'bank_type', 'status', 'currency', 'amount', 'balance', 'transactionType'
     ]
 
     currency_mapping = {
         'MY': 'MYR',
         'SG': 'SGD',
     }
-    # print(f"bank_country_code: {bank_country_code}")
     # print(f"df: {df}")
 
     # get country code from bank_country_code
     bank_country_code_split = bank_country_code.split('_')  # Extract country code from bank_country_code
-    
     # Ensure all standard columns are present
     for col in standard_columns:
         match bank_country_code.strip():
@@ -215,8 +213,6 @@ def standardize_output_records(df, bank_country_code):
                 if col not in df.columns:
                     if col == 'currency': df[col] = currency_mapping[bank_country_code_split[-1]]
                     elif col == 'bank_type': df[col] = bank_country_code_split[0]
-                    elif col == 'description':
-                        df[col] = df[['reference','client_reference','additional_reference','misc_reference',]].astype(str).agg('|'.join, axis=1)
                     elif col == 'amount': 
                         # Ensure both 'amount+' and 'amount-' columns are converted to numeric
                         df['amount+'] = (
@@ -237,7 +233,25 @@ def standardize_output_records(df, bank_country_code):
 
                         # Combine 'amount+' and 'amount-' into 'amount'
                         df[col] = df['amount+'].fillna(0) - df['amount-'].fillna(0)  # 'amount+' minus 'amount-' (negate the 'amount-')  
+                    elif col == 'transactionType':
+                        client_ref = df.get('description')
+                        if client_ref is not None:
+                            patterns = (
+                                (r'FAIRPRICE|GIANT|SONG MARKET', 'grocery'),
+                                (r'SHAW.SG', 'cinema'),
+                                (r'BUS/MRT', 'transportation'),
+                                (r'SP Digital|M1 LIMITED', 'utilities'),
+                                (r'MCDONALD|POPEYES', 'food'),
+                                (r'CANDY K', 'entertainment'),
+                            )
+                            for pattern, category in patterns:
+                                matches = client_ref.str.contains(pattern, case=False, na=False)
+                                df.loc[matches, col] = category
                     else: df[col] = pd.NA
+                else:
+                    if col == 'description':
+                        # df[col] = df[['client_reference','additional_reference','misc_reference','reference',]].astype(str).agg('|'.join, axis=1)
+                        df[col] = df[['description','supplementary_code_description']].astype(str).agg('|'.join, axis=1)
             case _:  
                 if col not in df.columns:  
                     df[col] = pd.NA  # Add missing columns with NA values

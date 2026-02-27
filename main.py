@@ -22,6 +22,15 @@ def output_manager(df, output_type="json", filename=None):
         case _:
             raise ValueError(f"Unsupported output type: {output_type}")
 
+def readFile(filePath, filename):
+    # check if the file exists with the current extension
+    input_file = os.path.join(filePath, filename)
+    print(f"\nChecking file: {input_file}")
+    if os.path.exists(input_file):
+        print(f"Using file: {input_file}")
+        return input_file
+    return None
+
 if __name__ == "__main__":
 #     input_file = os.getenv("INPUT_FILE", "xxx.pdf")  # Fallback to "default.csv"
 #     bank_name = os.getenv("BANK_NAME", "DBS")           # Fallback to "DBS"
@@ -41,56 +50,50 @@ if __name__ == "__main__":
     source_paths = folder_path.get('folder_paths', {}).get("source", {})
 
     prev_month_date = (datetime.now().replace(day=1) - timedelta(days=1)).strftime("%Y%m")
+    # print('prev_month_date', prev_month_date)
+    # prev_month_date = '202512'
     yyyymm = prev_month_date if GLOBAL_CONFIG["read_date_format"]["format"] is None else GLOBAL_CONFIG["read_date_format"]["format"]
     all_dfs = []
     standardize_headers = None
     # raise KeyError # for testing purposes
     for key, value in source_paths.items():
         bank_country_code = f"{key.upper()}"
+        filename_no_ext = f"{bank_country_code}_{yyyymm}"
         extension_priority = GLOBAL_CONFIG["read_extension_priority"]
         # set the `filename` extension based on the priority, and if file available then use it and skip for the rest extensions, otherwise continue to the next extension
         # the extension should follow the array get from `read_extension_priority` in the config.json
         for ext in extension_priority:
-            filename = f"{bank_country_code}_{yyyymm}.{ext}"
-            # check if the file exists with the current extension
-            input_file = os.path.join(value, filename)
-            print(f"\nChecking file: {input_file}")
-            if os.path.exists(input_file):
+            filename = f"{filename_no_ext}.{ext}"
+            currFile = readFile(value, filename)
+            if currFile != None:
+                input_file = currFile
                 file_type = ext  # Update file type based on the found file
-                print(f"Using file: {input_file}")
-                break
+                break # if get file then no need to search/read for new file with diff ext
         
         match file_type:
             case "pdf":
-                # df = parse_pdf(input_file, bank_code, country_code, password=password)
                 df = parse_pdf(input_file, bank_country_code, password=password)
             case "csv":
                 df = parse_excel(input_file, bank_country_code, password=password)
         # print(f"\n{df}")    
         # print(f"\n{df.columns}")    
-        # print(f"===============================")    
 
         
         bank_code = bank_country_code.split('_')[0]  # Extract bank code from the key
         country_code = bank_country_code.split('_')[1]  # Extract country code from the key
         # Apply header mapping
         df = apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mappings.json')
-        # print(f"\n df after apply_header_mapping: {df}")
         # print(f"\n{df}") 
-        # Replace the match statement in main with:
         df = format_transaction_date(df, bank_country_code, yyyymm)
         # print(f"\n{df}") 
         df = standardize_output_records(df, bank_country_code)
         # print(f"\n{df}") 
         standardize_headers = df.columns
 
-
-        #################################################################################
-        #####          SHOULD HAVE MOVE TO A FUNCTION
-        #################################################################################
+        ##################################################################################
+        #####                     SHOULD HAVE MOVE TO A FUNCTION                     #####
+        ##################################################################################
         all_dfs.append(df)
-
-
         #################################################################################
 
         output_type = GLOBAL_CONFIG["output"]["file_format"]
