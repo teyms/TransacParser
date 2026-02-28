@@ -13,13 +13,14 @@ def parse_excel(input_file, bank_country_code, password=None):
     match bank_country_code:
         case "DBS_SG":
             # headers = pd.read_csv(input_file, skiprows=19, engine='python', nrows=1).columns.tolist() # Get headers from the first row
-            # headers = pd.read_csv(input_file, skiprows=7, engine='python', nrows=1).columns.tolist() # Get headers from the first row
-            headers = pd.read_csv(input_file, skiprows=8, engine='python', nrows=1).columns.tolist() # Get headers from the first row
+            headers = pd.read_csv(input_file, skiprows=7, engine='python', nrows=1).columns.tolist() # Get headers from the first row
+            # headers = pd.read_csv(input_file, skiprows=8, engine='python', nrows=1).columns.tolist() # Get headers from the first row
             # print(f"DBS_SG headers: {headers}")
             df = pd.read_csv(
                     input_file,
-                    # skiprows=8,
-                    skiprows=9,
+                    # skiprows=21,
+                    skiprows=8,
+                    # skiprows=9,
                     names=headers,
                     header=None,
                     engine="python",
