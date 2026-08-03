@@ -1,6 +1,7 @@
 import json
 import os
 import pandas as pd
+from utils.llm_client import transaction_classifier_model
 
 def apply_header_mapping(df, bank_code, country_code, mapping_path='bank_mappings.json'):
     """
@@ -101,7 +102,7 @@ def standardize_output_records(df, bank_country_code):
     """
     # Define the standard columns
     standard_columns = [
-        'date', 'description', 'bank_type', 'status', 'currency', 'amount', 'balance', 'transactionType'
+        'date', 'description', 'bank_type', 'currency', 'amount', 'balance','status', 'transactionType'
     ]
 
     currency_mapping = {
@@ -233,30 +234,115 @@ def standardize_output_records(df, bank_country_code):
 
                         # Combine 'amount+' and 'amount-' into 'amount'
                         df[col] = df['amount+'].fillna(0) - df['amount-'].fillna(0)  # 'amount+' minus 'amount-' (negate the 'amount-')  
-                    elif col == 'transactionType':
-                        client_ref = df.get('description')
-                        if client_ref is not None:
-                            patterns = (
-                                (r'FAIRPRICE|GIANT|SONG MARKET', 'grocery'),
-                                (r'SHAW.SG', 'cinema'),
-                                (r'BUS/MRT', 'transportation'),
-                                (r'SP Digital|M1 LIMITED', 'utilities'),
-                                (r'MCDONALD|POPEYES', 'food'),
-                                (r'CANDY K', 'entertainment'),
-                            )
-                            for pattern, category in patterns:
-                                matches = client_ref.str.contains(pattern, case=False, na=False)
-                                df.loc[matches, col] = category
+                    # elif col == 'transactionType':
+                    #     client_ref = df.get('description')
+                    #     if client_ref is not None:
+                    #         patterns = (
+                    #             (r'FAIRPRICE|GIANT|SONG MARKET', 'grocery'),
+                    #             (r'SHAW.SG', 'cinema'),
+                    #             (r'BUS/MRT', 'transportation'),
+                    #             (r'SP Digital|M1 LIMITED', 'utilities'),
+                    #             (r'MCDONALD|POPEYES', 'food'),
+                    #             (r'CANDY K', 'entertainment'),
+                    #         )
+                    #         for pattern, category in patterns:
+                    #             matches = client_ref.str.contains(pattern, case=False, na=False)
+                    #             df.loc[matches, col] = category
+                    elif col == 'description':#for records before 202601
+                        df[col] = df[['client_reference','additional_reference','misc_reference','reference',]].astype(str).agg('|'.join, axis=1)
+                        # df[col] = df[['description','supplementary_code_description']].astype(str).agg('|'.join, axis=1)
                     else: df[col] = pd.NA
                 else:
-                    if col == 'description':
+                    if col == 'description':#for records in 202601 and after
                         # df[col] = df[['client_reference','additional_reference','misc_reference','reference',]].astype(str).agg('|'.join, axis=1)
                         df[col] = df[['description','supplementary_code_description']].astype(str).agg('|'.join, axis=1)
             case _:  
                 if col not in df.columns:  
                     df[col] = pd.NA  # Add missing columns with NA values
+        if col == 'transactionType':
+            client_ref = df.get('description')
+            if client_ref is not None:
+                patterns = (
+                    (r'ACTIVANTS|INTEREST CREDIT|CREDIT PROFIT|Interest Earned', 'income'),
+                    (r'MCDONALD|POPEYES|BURGER|KFC|BREADTALK|ICHIBAN BOSHI|JOLLIBEE|SUSHI|CAFE|RESTAURANT|FOOD|MAMAK|KOPI|KOPITIAM|BAKERY|RAMEN', 'food'),
+                    # (r'', 'TransferFrom'),
+                    # (r'', 'Others'),
+                    # (r'', 'TransferTo'),
+                    (r'FAIRPRICE|GIANT|SONG MARKET|MARKET', 'grocery'),
+                    # (r'', 'Savings'),
+                    (r'PTPTN|MOM TRANSFER|MON TRANSFER', 'monthly'),
+                    (r'MOOMOO|RAKUTEN', 'Investment'),
+                    (r'BUS/MRT|LIM BOON KEONG|redBus|CAUSEWAYLINK|SIMPLYGO', 'transportation'),
+                    (r'CANDY K|CASH STUDIO|SHAW.SG', 'entertainment'),
+                    (r'ATM|RELOAD|TOPUP|TOP UP', 'reload'),
+                    (r'UDEMY|DESIGNGURU|BUILDMOAT', 'Self-invest'),
+                    (r'SGDMYR|SGD MYR|MYRSGD|MYR SGD|3DOT|MONEYEXCHANGE|CLICKS REGIONL', 'MoneyExchange'),
+                    # (r'', 'Trip'),
+                    (r'GREATEASTERN|GREAT EASTERN', 'Insurance'),
+                    (r'NETFLIX|NETFILX|SPOTIFY|OPENAI|CHATGPT|UNIFI|ZERO1', 'Subscription & Utility Charges'),
+                    (r'creditcard', 'Credit Card Payment'),
+                    (r'SP Digital|M1 LIMITED|RENTAL', 'RENTAL'),
+                )
+                for pattern, category in patterns:
+                    matches = client_ref.str.contains(pattern, case=False, na=False)
+                    df.loc[matches, col] = category
+
     
     # Reorder the DataFrame to match the standard columns
     df = df[standard_columns]
     
+    return df
+
+def transaction_classify(df):
+    """
+    Classify each transaction row using the Ollama transaction model.
+
+    Combines every column except the transaction-type column into a JSON string,
+    feeds it to the LLM, and stores the returned category.
+    """
+    if df is None or df.empty:
+        return df
+
+    classification_col = "transactionType"
+    if classification_col not in df.columns:
+        df["transactionType"] = pd.NA
+        classification_col = "transactionType"
+    confidence_col = "transactionTypeConfidence"
+    if confidence_col not in df.columns:
+        df[confidence_col] = pd.NA
+
+    exclude_cols = {classification_col}
+
+    def _row_to_transaction_string(row):
+        record = {}
+        for col, value in row.items():
+            if col in exclude_cols:
+                continue
+            if pd.isna(value):
+                record[col] = None
+            else:
+                record[col] = value
+        return json.dumps(record, default=str)
+
+    for idx, row in df.iterrows():
+        existing_value = row.get(classification_col)
+        if existing_value is not None and not pd.isna(existing_value):
+            if str(existing_value).strip():
+                continue
+        transaction_payload = _row_to_transaction_string(row)
+        try:
+            result = transaction_classifier_model(
+                transaction_payload, return_confidence=True
+            )
+            print(result)
+            if isinstance(result, tuple):
+                prediction, confidence = result
+            else:
+                prediction, confidence = result, None
+            df.at[idx, classification_col] = prediction
+            if confidence is not None:
+                df.at[idx, confidence_col] = confidence
+        except Exception as exc:
+            print(f"Classification failed for row {idx}: {exc}")
+
     return df

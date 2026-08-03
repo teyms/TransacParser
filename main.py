@@ -1,6 +1,6 @@
 import os
 import json
-from utils.helpers import apply_header_mapping, load_config, format_transaction_date, standardize_output_records
+from utils.helpers import apply_header_mapping, load_config, format_transaction_date, standardize_output_records, transaction_classify
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from parsers import parse_pdf, parse_excel
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     prev_month_date = (datetime.now().replace(day=1) - timedelta(days=1)).strftime("%Y%m")
     # print('prev_month_date', prev_month_date)
-    # prev_month_date = '202512'
+    # prev_month_date = '202601'
     yyyymm = prev_month_date if GLOBAL_CONFIG["read_date_format"]["format"] is None else GLOBAL_CONFIG["read_date_format"]["format"]
     all_dfs = []
     standardize_headers = None
@@ -87,6 +87,8 @@ if __name__ == "__main__":
         df = format_transaction_date(df, bank_country_code, yyyymm)
         # print(f"\n{df}") 
         df = standardize_output_records(df, bank_country_code)
+        # print(df)
+        df = transaction_classify(df)
         # print(f"\n{df}") 
         standardize_headers = df.columns
 
